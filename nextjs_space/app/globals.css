@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 210 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 20% 10%;
+
+    --primary: 207 77% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 207 77% 50%;
+
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 210 20% 10%;
+
+    --muted: 210 20% 95%;
+    --muted-foreground: 210 10% 42%;
+
+    --accent: 27 74% 56%;
+    --accent-foreground: 0 0% 20%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 10%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 27 74% 56%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 207 77% 40%;
+
+    --radius: 0.75rem;
+    --radius-sm: calc(0.75rem - 4px);
+    --radius-lg: calc(0.75rem + 4px);
+    --radius-full: 9999px;
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+    --spacing-3xl: 64px;
+
+    --shadow-card: 0 1px 3px 0 hsl(210 20% 10% / 0.1), 0 1px 2px -1px hsl(210 20% 10% / 0.06);
+    --shadow-floating: 0 4px 12px 0 hsl(210 20% 10% / 0.08);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+
+    --gradient-primary: linear-gradient(135deg, hsl(207 77% 40%) 0%, hsl(207 77% 50%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.9) 0%, hsl(0 0% 100% / 0.95) 100%);
+
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 350ms;
+
+    --chart-1: 207 77% 40%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 27 74% 56%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 207 77% 50%;
+
+    --content-bg: #EDF2F7;
+    --login-bg: #1469B6;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .financial-card {
+    background: var(--gradient-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: var(--shadow-card);
+    padding: 1.25rem;
+    transition: all var(--duration-fast) ease;
+  }
+  .financial-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-floating);
+  }
+  .apple-interaction {
+    transition: all var(--duration-fast) ease;
+  }
+  .apple-interaction:hover {
+    transform: translateY(-1px);
+  }
+  .apple-interaction:active {
+    transform: scale(0.98);
+  }
+}
