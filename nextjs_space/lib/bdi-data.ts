@@ -41,8 +41,8 @@ export const BDI_RANGES: Record<string, { min: number; max: number; label: strin
   riscos: { min: 0.97, max: 1.27, label: 'Riscos', desc: 'Margem para riscos e imprevistos na execução' },
   despesasFinanceiras: { min: 0.59, max: 1.39, label: 'Despesas Financeiras', desc: 'Custos com capital de giro e financiamento' },
   lucro: { min: 6.16, max: 8.96, label: 'Lucro', desc: 'Margem de lucro bruto da empresa' },
-  pis: { min: 0.65, max: 0.65, label: 'PIS', desc: 'Regime cumulativo: 0,65%. Não cumulativo ou Simples: informe o percentual efetivo (Acórdão 2622/2013, itens 9.3.2.4 e 9.3.2.5)' },
-  cofins: { min: 3.00, max: 3.00, label: 'COFINS', desc: 'Regime cumulativo: 3,00%. Não cumulativo ou Simples: informe o percentual efetivo (Acórdão 2622/2013, itens 9.3.2.4 e 9.3.2.5)' },
+  pis: { min: 0.65, max: 0.65, label: 'PIS', desc: 'Regime cumulativo de obras: 0,65% (Lei 9.718/1998; Lei 10.833/2003, art. 10, XX). Não cumulativo ou Simples: informe o percentual efetivo (Acórdão 2.622/2013, itens 9.3.2.4 e 9.3.2.5)' },
+  cofins: { min: 3.00, max: 3.00, label: 'COFINS', desc: 'Regime cumulativo de obras: 3,00% (Lei 9.718/1998; Lei 10.833/2003, art. 10, XX). Não cumulativo ou Simples: informe o percentual efetivo (Acórdão 2.622/2013, itens 9.3.2.4 e 9.3.2.5)' },
   iss: { min: 0, max: 5.00, label: 'ISS', desc: 'Alíquota municipal (2% a 5%) aplicada sobre a base de cálculo definida na lei do município' },
 };
 

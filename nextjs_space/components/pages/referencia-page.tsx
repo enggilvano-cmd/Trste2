@@ -25,6 +25,7 @@ export function ReferenciaPage() {
           <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-4">
             <BookOpen className="h-4 w-4 text-primary" /> Limites de BDI por Tipo de Obra
           </h3>
+          <p className="text-xs text-muted-foreground -mt-2 mb-3">Acórdão TCU 2.622/2013-Plenário, item 9.1 (valores sem desoneração da folha).</p>
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm">
               <thead>
@@ -66,7 +67,7 @@ export function ReferenciaPage() {
             Onde T = PIS + COFINS + ISS + CPRB (se desonerado). AC, Seguros, Riscos e Garantias somam-se no mesmo fator, conforme o Acórdão 2.622/2013. O BDI é aplicado sobre o Custo Direto para obter o Preço de Venda.
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            O Acórdão 2.622/2013 não trata da CPRB nas faixas de BDI. Para não penalizar o regime desonerado, a calculadora corrige cada limite pelo fator (1 − I₀) / (1 − I₀ − CPRB), com I₀ = PIS + COFINS + ISS. A faixa de referência vai do 1º ao 3º quartil; valores abaixo do Q1 também ficam fora dela.
+            O Acórdão 2.622/2013 não trata da CPRB nas faixas de BDI. Para não penalizar o regime desonerado, a calculadora corrige cada limite (critério do programa, não do Acórdão) pelo fator (1 − I₀) / (1 − I₀ − CPRB), com I₀ = PIS + COFINS + ISS. A faixa de referência vai do 1º ao 3º quartil; valores abaixo do Q1 também ficam fora dela.
           </p>
 
           <div className="mt-4">
@@ -111,8 +112,8 @@ export function ReferenciaPage() {
               </table>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              <strong>ISS</strong> (item 9.3.2.3): percentual compatível com a lei do município da obra, aplicando a alíquota (entre 2% e 5%) sobre a base de cálculo definida na legislação municipal.
-              <strong> PIS/COFINS</strong> (itens 9.3.2.4 e 9.3.2.5): no regime cumulativo, 0,65% e 3,00%; no não cumulativo, a média dos percentuais efetivamente recolhidos; no Simples Nacional, as alíquotas do Anexo IV da LC 123/2006.
+              <strong>ISS</strong> (item 9.3.2.3): percentual compatível com a lei do município da obra, aplicando a alíquota (entre 2% e 5%, LC 116/2003) sobre a base de cálculo definida na legislação municipal. Em obras (subitem 7.02), a lei municipal pode reduzir a base, e a carga efetiva pode ficar abaixo de 2% (LC 116/2003, art. 8º-A, §1º).
+              <strong> PIS/COFINS</strong>: no regime cumulativo de obras, 0,65% e 3,00% (Lei 9.718/1998; Lei 10.833/2003, art. 10, XX), para receitas até 31/12/2026; no regime não cumulativo, a média dos percentuais efetivamente recolhidos, e no Simples Nacional, as alíquotas do Anexo IV da LC 123/2006 (itens 9.3.2.4 e 9.3.2.5 do Acórdão). A partir de 2027 a CBS substitui o PIS/COFINS (LC 214/2025).
             </p>
           </div>
         </div>
@@ -159,6 +160,42 @@ export function ReferenciaPage() {
         </div>
       </FadeIn>
 
+      {/* Base normativa */}
+      <FadeIn delay={0.12}>
+        <div className="financial-card">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-4">
+            <BookOpen className="h-4 w-4 text-primary" /> Base normativa
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="text-left py-2 px-2 sm:px-3 text-muted-foreground font-medium">Norma</th>
+                  <th className="text-left py-2 px-2 sm:px-3 text-muted-foreground font-medium">Uso no BDI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['Acórdão TCU 2.622/2013-Plenário', 'Faixas do BDI (item 9.1), faixas das parcelas (item 9.2.1), ISS (item 9.3.2.3), PIS/COFINS não cumulativo e Simples (itens 9.3.2.4 e 9.3.2.5)'],
+                  ['Decreto 7.983/2013, art. 9º', 'Componentes mínimos do BDI; tributos diretos e personalísticos ficam fora'],
+                  ['Súmula TCU 254/2010', 'IRPJ e CSLL não entram no BDI'],
+                  ['Súmula TCU 258/2010', 'Composições e detalhamento do BDI integram o orçamento'],
+                  ['Lei 12.546/2011 + Lei 14.973/2024', 'CPRB: 2,70% em 2026; 1,80% em 2027; extinta em 2028'],
+                  ['Lei 9.718/1998 + Lei 10.833/2003, art. 10, XX', 'PIS 0,65% e COFINS 3,00% no regime cumulativo de obras, até 31/12/2026'],
+                  ['LC 116/2003, arts. 7º e 8º-A', 'ISS entre 2% e 5%; em obras a base pode ser reduzida pela lei municipal'],
+                  ['EC 132/2023 + LC 214/2025', 'Reforma tributária: CBS e IBS de teste em 2026 (compensáveis, fora do BDI); CBS substitui PIS/COFINS a partir de 2027'],
+                ].map(([norma, uso]) => (
+                  <tr key={norma} className="border-b border-border/30 align-top">
+                    <td className="py-2 px-2 sm:px-3 font-medium text-foreground">{norma}</td>
+                    <td className="py-2 px-2 sm:px-3 text-muted-foreground">{uso}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </FadeIn>
+
       {/* O que NÃO entra no BDI */}
       <FadeIn delay={0.15}>
         <div className="financial-card">
@@ -183,7 +220,7 @@ export function ReferenciaPage() {
             ))}
           </ul>
           <p className="text-xs text-muted-foreground mt-4">
-            Estes itens devem ser detalhados como custos diretos no orçamento da obra, conforme Acórdão 2.622/2013 do TCU.
+            Estes itens devem ser detalhados como custos diretos no orçamento da obra, conforme o Acórdão 2.622/2013 (item 9.3.2.1), o Decreto 7.983/2013 (art. 9º) e a Súmula TCU 254.
           </p>
         </div>
       </FadeIn>

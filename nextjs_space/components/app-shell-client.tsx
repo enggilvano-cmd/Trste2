@@ -189,7 +189,7 @@ function AppSidebar({ currentPage, onPageChange, profile }: { currentPage: strin
               <Button
                 variant="ghost"
                 className={cn(
-                  'group transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:scale-[1.02]',
+                  'group/profile transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:shadow-md hover:scale-[1.02]',
                   isMobile ? 'w-full h-12 rounded-2xl justify-start gap-3' : isCollapsed ? 'h-14 w-14 rounded-2xl p-0 flex items-center justify-center' : 'w-full h-12 rounded-2xl justify-start gap-3'
                 )}
               >
@@ -201,10 +201,10 @@ function AppSidebar({ currentPage, onPageChange, profile }: { currentPage: strin
                 {(!isCollapsed || isMobile) && (
                   <div className="flex-1 text-left">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate text-foreground group-hover:text-accent-foreground">{getFirstName(profile.name) || 'Usuário'}</p>
-                      <span className="text-xs text-muted-foreground group-hover:text-accent-foreground/80">{ROLE_SUFFIX[profile.role ?? ''] ?? ''}</span>
+                      <p className="text-sm font-medium truncate text-foreground group-hover/profile:text-accent-foreground">{getFirstName(profile.name) || 'Usuário'}</p>
+                      <span className="text-xs text-muted-foreground group-hover/profile:text-accent-foreground/80">{ROLE_SUFFIX[profile.role ?? ''] ?? ''}</span>
                     </div>
-                    {remaining && <span className="text-xs text-muted-foreground group-hover:text-accent-foreground/80 mt-0.5">{remaining}</span>}
+                    {remaining && <span className="text-xs text-muted-foreground group-hover/profile:text-accent-foreground/80 mt-0.5">{remaining}</span>}
                   </div>
                 )}
               </Button>

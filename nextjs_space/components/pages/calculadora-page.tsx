@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Calculator, Save, Trash2, FileDown, Info, AlertTriangle, CheckCircle2, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 import {
   OBRA_TYPES, TCU_LIMITS, DESONERACAO_RULES, DEFAULT_BDI_VALUES,
   BDI_RANGES, TCU_COMPONENT_RANGES, ISS_ALIQUOTA_MIN, ISS_ALIQUOTA_MAX, calcIssEfetivo,
@@ -10,6 +11,7 @@ import {
   formatCurrency, formatPercent, ObraTypeValue,
 } from '@/lib/bdi-data';
 import { FadeIn } from '@/components/ui/animate';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface CalculadoraPageProps {
   editCalcId?: string | null;
@@ -17,6 +19,7 @@ interface CalculadoraPageProps {
 }
 
 export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
+  const { data: session } = useSession();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [obraType, setObraType] = useState<ObraTypeValue>('edificios');
@@ -35,8 +38,24 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
   const [issBase, setIssBase] = useState(100);
   const iss = calcIssEfetivo(issAliquota, issBase);
 
-  const [custoDireto, setCustoDireto] = useState('');
+  // custo direto em centavos (campo com máscara: 1.234.567,89)
+  const [custoCents, setCustoCents] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  // A coluna de resultado só acompanha a rolagem quando cabe inteira na tela;
+  // se for mais alta (tela baixa ou avisos extras), rola junto para nada ficar escondido.
+  const resultColRef = useRef<HTMLDivElement>(null);
+  const [resultColFits, setResultColFits] = useState(false);
+  useEffect(() => {
+    const el = resultColRef.current;
+    if (!el) return;
+    const check = () => setResultColFits(el.offsetHeight + 72 + 16 <= window.innerHeight);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener('resize', check);
+    return () => { ro.disconnect(); window.removeEventListener('resize', check); };
+  });
   const [exportingPdf, setExportingPdf] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
@@ -84,7 +103,7 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
             // cálculos antigos guardavam só o ISS efetivo
             setIssAliquota(c.iss ?? DEFAULT_BDI_VALUES.iss); setIssBase(100);
           }
-          setCustoDireto(c.custoDireto != null ? String(c.custoDireto) : '');
+          setCustoCents(c.custoDireto != null ? Math.round(Number(c.custoDireto) * 100) : 0);
         }
       })
       .catch(() => toast.error('Erro ao carregar cálculo.'))
@@ -114,7 +133,7 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
   const issAliquotaFora = issAliquota < ISS_ALIQUOTA_MIN || issAliquota > ISS_ALIQUOTA_MAX;
   const issBaseFora = issBase <= 0 || issBase > 100;
   const statusInfo = getTcuStatusInfo(tcuStatus);
-  const custoNum = parseFloat(custoDireto?.replace?.(/[^\d.,]/g, '')?.replace?.(',', '.') ?? '0') || 0;
+  const custoNum = custoCents / 100;
   const precoVenda = custoNum > 0 ? custoNum * (1 + bdiResult / 100) : 0;
 
   const handleClear = () => {
@@ -124,11 +143,11 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
     setRiscos(DEFAULT_BDI_VALUES.riscos); setDf(DEFAULT_BDI_VALUES.despesasFinanceiras);
     setLucro(DEFAULT_BDI_VALUES.lucro); setPis(DEFAULT_BDI_VALUES.pis);
     setCofins(DEFAULT_BDI_VALUES.cofins); setIssAliquota(DEFAULT_BDI_VALUES.iss); setIssBase(100);
-    setCustoDireto('');
+    setCustoCents(0);
   };
 
   const handleSave = async () => {
-    if (!name.trim()) { toast.error('Informe o nome do cálculo.'); return; }
+    if (!name.trim()) { toast.error('Informe o nome da obra.'); return; }
     setSaving(true);
     try {
       const body = {
@@ -151,40 +170,19 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
   const handleExportPdf = async () => {
     setExportingPdf(true);
     try {
-      const body = {
-        name: name || 'Cálculo BDI', obraType, desoneracao, regimeYear, ac, seguros, riscos,
-        despesasFinanceiras: df, lucro, pis, cofins, iss, cprb: cprbValue,
-        bdiPercent: bdiResult, custoDireto: custoNum, precoVenda, tcuStatus, totalTributos,
-      };
-      const createRes = await fetch('/api/export/pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const createData = await createRes.json();
-      if (!createData?.request_id) throw new Error(createData?.error ?? 'Erro ao gerar PDF');
-
-      // Poll for status
-      let attempts = 0;
-      const maxAttempts = 60;
-      while (attempts < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const statusRes = await fetch('/api/export/pdf/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_id: createData.request_id }) });
-        const statusData = await statusRes.json();
-        if (statusData?.status === 'SUCCESS' && statusData?.pdf_base64) {
-          const byteChars = atob(statusData.pdf_base64);
-          const byteArray = new Uint8Array(byteChars.length);
-          for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-          const blob = new Blob([byteArray], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = `BDI_${name || 'Calculo'}.pdf`; a.click();
-          URL.revokeObjectURL(url);
-          toast.success('PDF exportado com sucesso!');
-          break;
-        }
-        if (statusData?.status === 'FAILED') throw new Error(statusData?.error ?? 'Falha na geração');
-        attempts++;
-      }
-      if (attempts >= maxAttempts) throw new Error('Timeout ao gerar PDF');
-    } catch (err: any) {
-      toast.error(err?.message ?? 'Erro ao exportar PDF.');
+      // gerado no navegador: não depende de serviço externo
+      const { downloadBdiPdf } = await import('@/lib/bdi-pdf');
+      downloadBdiPdf({
+        name: name || 'Cálculo de BDI', description, obraType, desoneracao, regimeYear,
+        ac, seguros, riscos, despesasFinanceiras: df, lucro, pis, cofins,
+        issAliquota, issBase, iss, cprb: cprbValue,
+        bdi: bdiResult, custoDireto: custoNum, precoVenda, totalTributos,
+        tcuStatus, limits: limits ?? TCU_LIMITS[obraType], author: session?.user?.name ?? session?.user?.email,
+      });
+      toast.success('PDF exportado com sucesso!');
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+      toast.error('Erro ao gerar o PDF.');
     } finally {
       setExportingPdf(false);
     }
@@ -205,7 +203,7 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Nome do Cálculo *</label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Nome da Obra *</label>
               <input
                 value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="Ex.: Edifício Sede - Prefeitura" className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:ring-2 focus:ring-primary outline-none"
@@ -333,6 +331,10 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
                   )}
                 </div>
 
+                <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2">
+                  PIS/COFINS cumulativos valem para receitas até 31/12/2026. A partir de 2027 a CBS substitui o PIS/COFINS (LC 214/2025) e a CPRB cai para 1,80%. Para execução a partir de 2027, preveja BDI por exercício ou cláusula de reequilíbrio.
+                </p>
+
                 {desoneracao && (
                   <div className="flex items-center justify-between py-2 px-3 bg-primary/5 rounded-lg">
                     <div>
@@ -351,35 +353,40 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
       </div>
 
       {/* Coluna de resultado: fica visível ao rolar no desktop largo */}
-      <div className="space-y-6 min-w-0 xl:sticky xl:top-0 xl:max-h-[calc(100vh-88px)] xl:overflow-y-auto">
+      <div ref={resultColRef} className={`space-y-6 xl:space-y-4 min-w-0 ${resultColFits ? 'xl:sticky xl:top-[72px]' : ''}`}>
       {/* Seção D - Custo Direto e Resultado */}
       <FadeIn delay={0.15}>
         <div className="financial-card">
           <h3 className="text-base font-semibold text-foreground mb-4">Custo Direto e Resultado</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-1 gap-4 mb-6">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">Custo Direto (R$)</label>
-              <input
-                type="text" value={custoDireto}
-                onChange={(e) => setCustoDireto(e.target.value.replace(/[^\d.,]/g, ''))}
-                placeholder="0,00"
-                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm font-mono focus:ring-2 focus:ring-primary outline-none"
-              />
+          <div className="mb-4">
+            <label htmlFor="custo-direto" className="text-xs font-medium text-muted-foreground block mb-1">Custo Direto</label>
+            <CurrencyInput id="custo-direto" value={custoCents} onValueChange={setCustoCents} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-primary/5 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">BDI Calculado</p>
+              <p className="text-2xl sm:text-3xl font-bold text-primary tabular-nums">{formatPercent(bdiResult)}</p>
+            </div>
+            <div className="bg-warning/5 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Tributos no BDI</p>
+              <p className="text-2xl sm:text-3xl font-bold text-warning tabular-nums">{formatPercent(totalTributos)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-2 gap-4">
-            <div className="bg-primary/5 rounded-xl p-4 text-center xl:col-span-2">
-              <p className="text-xs text-muted-foreground mb-1">BDI Calculado</p>
-              <p className="text-3xl font-bold text-primary">{formatPercent(bdiResult)}</p>
-            </div>
-            <div className="bg-success/5 rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Preço de Venda</p>
-              <p className="text-xl sm:text-2xl font-bold text-success break-words">{custoNum > 0 ? formatCurrency(precoVenda) : '—'}</p>
-            </div>
-            <div className="bg-warning/5 rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Tributos no BDI</p>
-              <p className="text-2xl font-bold text-warning">{formatPercent(totalTributos)}</p>
-            </div>
+
+          <div className="mt-3 bg-success/5 rounded-xl p-3 sm:p-4">
+            <p className="text-xs text-muted-foreground mb-1 text-center">Preço de Venda</p>
+            {custoNum > 0 ? (
+              <>
+                <p className="text-xl sm:text-2xl font-bold text-success text-center tabular-nums whitespace-nowrap">{formatCurrency(precoVenda)}</p>
+                <div className="mt-3 pt-2 border-t border-border/40 space-y-1 text-xs">
+                  <div className="flex justify-between gap-2"><span className="text-muted-foreground">Custo direto</span><span className="font-mono tabular-nums text-foreground">{formatCurrency(custoNum)}</span></div>
+                  <div className="flex justify-between gap-2"><span className="text-muted-foreground">BDI ({formatPercent(bdiResult)})</span><span className="font-mono tabular-nums text-foreground">+ {formatCurrency(precoVenda - custoNum)}</span></div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-1">Informe o custo direto para calcular</p>
+            )}
           </div>
         </div>
       </FadeIn>
@@ -391,14 +398,15 @@ export function CalculadoraPage({ editCalcId, onSaved }: CalculadoraPageProps) {
             {tcuStatus === 'acima_q3' ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
             Conformidade TCU — Acórdão 2622/2013
           </h3>
-          <div className={`rounded-xl p-4 ${statusInfo?.bg} mb-4`}>
+          <div className={`rounded-xl p-4 xl:p-3 ${statusInfo?.bg} mb-4 xl:mb-3`}>
             <p className={`text-lg font-bold ${statusInfo?.color}`}>{statusInfo?.label}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {OBRA_TYPES.find((o) => o.value === obraType)?.label} — Q1: {formatPercent(limits?.q1)} | Médio: {formatPercent(limits?.medio)} | Q3: {formatPercent(limits?.q3)}
+              {OBRA_TYPES.find((o) => o.value === obraType)?.label}<span className="xl:hidden"> — Q1: {formatPercent(limits?.q1)} | Médio: {formatPercent(limits?.medio)} | Q3: {formatPercent(limits?.q3)}</span>
             </p>
+            <p className="text-[11px] text-muted-foreground mt-1">Faixas do BDI: Acórdão 2.622/2013, item 9.1.</p>
             {limitesAjustados && (
               <p className="text-xs text-muted-foreground mt-1">
-                Faixas ajustadas pela CPRB de {formatPercent(cprbValue)}. Originais do Acórdão (sem CPRB): Q1 {formatPercent(TCU_LIMITS[obraType]?.q1)} | Médio {formatPercent(TCU_LIMITS[obraType]?.medio)} | Q3 {formatPercent(TCU_LIMITS[obraType]?.q3)}
+                Faixas ajustadas pela CPRB de {formatPercent(cprbValue)} (critério do programa: o Acórdão não publica faixas com desoneração). Originais do Acórdão (sem CPRB): Q1 {formatPercent(TCU_LIMITS[obraType]?.q1)} | Médio {formatPercent(TCU_LIMITS[obraType]?.medio)} | Q3 {formatPercent(TCU_LIMITS[obraType]?.q3)}
               </p>
             )}
           </div>
