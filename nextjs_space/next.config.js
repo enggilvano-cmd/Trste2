@@ -5,6 +5,8 @@ const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   output: process.env.NEXT_OUTPUT_MODE,
   poweredByHeader: false,
+  // oculta o botão "N" (indicador do Next.js) no canto da tela em desenvolvimento
+  devIndicators: false,
   productionBrowserSourceMaps: false,
   outputFileTracingRoot: process.env.NEXT_OUTPUT_MODE ? path.join(__dirname, '../') : '/',
   typescript: {
@@ -26,7 +28,8 @@ const nextConfig = {
   // the platform's browser checks on the pod browse via 127.0.0.1. Enumerated hosts, never a
   // wildcard: every conversation previews under the same parent domain and serves content its own
   // author controls, so `**.<domain>` would let any UNRELATED app's preview reach this dev server.
-  allowedDevOrigins: ['127.0.0.1', '2b3bcaf71.na122.preview.abacusai.app'],
+  // 169.254.83.107: IP de rede desta máquina (acesso local por http://169.254.83.107:3000)
+  allowedDevOrigins: ['127.0.0.1', '169.254.83.107', '2b3bcaf71.na122.preview.abacusai.app'],
 };
 
 const fs = require('fs');

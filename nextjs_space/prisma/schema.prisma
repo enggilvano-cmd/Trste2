@@ -1,7 +1,6 @@
 generator client {
     provider = "prisma-client-js"
     binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
-    output = "/home/ubuntu/bdi_calc_pro/nextjs_space/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -16,12 +15,15 @@ model User {
   password       String
   role           String    @default("user")
   isActive       Boolean   @default(true)
+  trialExpiresAt        DateTime?
+  subscriptionExpiresAt DateTime?
   emailVerified  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   accounts       Account[]
   sessions       Session[]
   calculations   BdiCalculation[]
+  auditLogs      AuditLog[]
 
   @@index([email])
 }
@@ -79,6 +81,8 @@ model BdiCalculation {
   pis                 Float
   cofins              Float
   iss                 Float
+  issAliquota         Float?
+  issBase             Float?
   cprb                Float    @default(0)
   bdiPercent          Float
   custoDireto         Float?
@@ -95,4 +99,18 @@ model SystemSetting {
   key       String   @id
   value     String
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+// Log de auditoria das ações administrativas (gestão de usuários)
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String
+  resourceType String
+  resourceId   String?
+  newValues    Json?
+  createdAt    DateTime @default(now())
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
 }

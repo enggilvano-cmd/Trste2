@@ -44,6 +44,8 @@ export async function POST(request: Request) {
       pis: body.pis,
       cofins: body.cofins,
       iss: body.iss,
+      issAliquota: body.issAliquota ?? null,
+      issBase: body.issBase ?? null,
       cprb: body.cprb ?? 0,
       bdiPercent: body.bdiPercent,
       custoDireto: body.custoDireto ?? null,

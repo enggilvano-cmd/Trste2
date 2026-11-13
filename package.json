@@ -1,0 +1,10 @@
+{
+  "name": "trste2",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix nextjs_space run dev",
+    "build": "npm --prefix nextjs_space run build",
+    "start": "npm --prefix nextjs_space run start",
+    "db:start": "npm --prefix nextjs_space run db:start"
+  }
+}

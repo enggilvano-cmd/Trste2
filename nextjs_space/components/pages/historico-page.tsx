@@ -52,7 +52,8 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
         regimeYear: calc?.regimeYear ?? null,
         ac: calc?.ac, seguros: calc?.seguros, riscos: calc?.riscos,
         despesasFinanceiras: calc?.despesasFinanceiras, lucro: calc?.lucro,
-        pis: calc?.pis, cofins: calc?.cofins, iss: calc?.iss, cprb: calc?.cprb ?? 0,
+        pis: calc?.pis, cofins: calc?.cofins, iss: calc?.iss,
+        issAliquota: calc?.issAliquota ?? null, issBase: calc?.issBase ?? null, cprb: calc?.cprb ?? 0,
         bdiPercent: calc?.bdiPercent, custoDireto: calc?.custoDireto ?? null,
         precoVenda: calc?.precoVenda ?? null, tcuStatus: calc?.tcuStatus,
       };
@@ -64,27 +65,20 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Meus Cálculos</h2>
-          <p className="text-sm text-muted-foreground">Histórico completo dos cálculos de BDI</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={onNewCalc} className="gap-1.5 h-9 bg-warning hover:bg-warning/90 text-white border-0">
-            <Plus className="h-4 w-4" /><span className="hidden md:inline">Novo Cálculo</span>
-          </Button>
-        </div>
+      <div>
+        <h2 className="text-xl font-bold text-foreground">Meus Cálculos</h2>
+        <p className="text-sm text-muted-foreground">Histórico completo dos cálculos de BDI</p>
       </div>
 
       {/* Filters */}
       <FadeIn>
         <div className="financial-card">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+            <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
+              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
               <select
                 value={filterObraType} onChange={(e) => setFilterObraType(e.target.value)}
-                className="h-9 px-3 rounded-lg border border-border bg-background text-sm"
+                className="h-9 px-3 rounded-lg border border-border bg-background text-sm min-w-0 w-full sm:w-auto"
               >
                 <option value="">Todos os tipos</option>
                 {OBRA_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -92,10 +86,10 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
             </div>
             <select
               value={filterTcuStatus} onChange={(e) => setFilterTcuStatus(e.target.value)}
-              className="h-9 px-3 rounded-lg border border-border bg-background text-sm"
+              className="h-9 px-3 rounded-lg border border-border bg-background text-sm w-full sm:w-auto"
             >
               <option value="">Todos os status</option>
-              <option value="dentro_q1">Dentro do Q1</option>
+              <option value="abaixo_q1">Abaixo do Q1</option>
               <option value="entre_q1_medio">Entre Q1 e Médio</option>
               <option value="entre_medio_q3">Entre Médio e Q3</option>
               <option value="acima_q3">Acima do Q3</option>
@@ -127,7 +121,7 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
                     <th className="text-center py-2 px-3 text-muted-foreground font-medium">Status</th>
                     <th className="text-right py-2 px-3 text-muted-foreground font-medium hidden lg:table-cell">Custo Direto</th>
                     <th className="text-right py-2 px-3 text-muted-foreground font-medium hidden lg:table-cell">Preço Venda</th>
-                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">Data</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium hidden sm:table-cell">Data</th>
                     <th className="text-center py-2 px-3 text-muted-foreground font-medium">Ações</th>
                   </tr>
                 </thead>
@@ -146,7 +140,7 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
                         </td>
                         <td className="py-3 px-3 text-right text-muted-foreground hidden lg:table-cell">{c?.custoDireto ? formatCurrency(c.custoDireto) : '—'}</td>
                         <td className="py-3 px-3 text-right text-muted-foreground hidden lg:table-cell">{c?.precoVenda ? formatCurrency(c.precoVenda) : '—'}</td>
-                        <td className="py-3 px-3 text-right text-muted-foreground text-xs">
+                        <td className="py-3 px-3 text-right text-muted-foreground text-xs hidden sm:table-cell">
                           <SafeDate date={c?.createdAt} options={{ day: '2-digit', month: '2-digit', year: 'numeric' }} localize />
                         </td>
                         <td className="py-3 px-3">
@@ -194,7 +188,7 @@ export function HistoricoPage({ onNewCalc, onViewCalc }: HistoricoPageProps) {
                 <DetailRow label="Lucro" value={formatPercent(viewCalc?.lucro)} />
                 <DetailRow label="PIS" value={formatPercent(viewCalc?.pis)} />
                 <DetailRow label="COFINS" value={formatPercent(viewCalc?.cofins)} />
-                <DetailRow label="ISS" value={formatPercent(viewCalc?.iss)} />
+                <DetailRow label="ISS" value={formatPercent(viewCalc?.iss) + (viewCalc?.issAliquota != null && viewCalc?.issBase != null ? ` (${formatPercent(viewCalc.issAliquota)} × ${viewCalc.issBase}%)` : '')} />
                 {viewCalc?.desoneracao && <DetailRow label="CPRB" value={formatPercent(viewCalc?.cprb)} />}
               </div>
               {viewCalc?.custoDireto && (

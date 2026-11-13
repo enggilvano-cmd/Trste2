@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { logAudit } from '@/lib/user-access';
 
 export async function GET() {
   const session = await auth();
@@ -27,5 +28,6 @@ export async function PUT(request: Request) {
       create: { key, value: String(value) },
     });
   }
+  await logAudit({ userId: session.user.id, action: 'system_settings_updated', resourceType: 'system_settings', newValues: body ?? {} });
   return NextResponse.json({ success: true });
 }

@@ -2,7 +2,9 @@
   "name": "app",
   "private": true,
   "scripts": {
+    "predev": "prisma generate && node ../.localdb/ensure.mjs",
     "dev": "next dev",
+    "db:start": "node ../.localdb/ensure.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint ."

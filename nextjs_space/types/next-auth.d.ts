@@ -7,6 +7,8 @@ declare module 'next-auth' {
       id: string;
       role: string;
       isActive: boolean;
+      /** Vencimento do trial/assinatura (ISO); null quando o perfil não expira. */
+      expiresAt?: string | null;
     } & DefaultSession['user'];
   }
   interface User {
@@ -20,5 +22,6 @@ declare module 'next-auth/jwt' {
     id: string;
     role: string;
     isActive: boolean;
+    expiresAt?: string | null;
   }
 }
